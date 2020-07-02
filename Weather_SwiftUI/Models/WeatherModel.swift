@@ -11,11 +11,13 @@ import Combine
 
 final class WeatherModel {
     let apiKey = "0e4203375ffd67b9320a9e4c2bdb8d7c"
+
     var components: URLComponents {
         var components = URLComponents()
         components.scheme = "https"
-        components.host = "samples.openweathermap.org"
-        components.path = "/data/2.5/weather?q=London&appid=\(apiKey)"
+        components.host = "api.openweathermap.org"
+        components.path = "/data/2.5/weather"
+        components.queryItems = [URLQueryItem(name: "q", value: "London"), URLQueryItem(name: "appid", value: apiKey)]
         return components
     }
 
@@ -23,16 +25,18 @@ final class WeatherModel {
         return URLSession.shared.dataTaskPublisher(for: components.url!)
             .map { $0.data }
             .decode(type: WeatherDataContainer.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
+
     }
 
 }
 
-struct WeatherDataContainer: Decodable {
+struct WeatherDataContainer: Decodable, Hashable {
     let name: String
-    let weather: Weather
+    let weather: [Weather]
 }
 
-struct Weather: Decodable {
+struct Weather: Decodable, Hashable {
     let main: String
 }
